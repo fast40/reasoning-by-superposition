@@ -19,13 +19,12 @@ class STokenizer(PreTrainedTokenizer):
         # Create inverse vocabulary (id to token mapping)
         self.ids_to_tokens = {v: k for k, v in self.vocab.items()}
         
-        # Set special token attributes
-        self.pad_token = '<eos>'
-        self.eos_token = '<eos>'
-        self.bos_token = '<eos>'
-        # self.unk_token = '<unk>'
-        
-        super().__init__()
+        super().__init__(
+            pad_token = '<eos>',
+            eos_token = '<eos>',
+            bos_token = '<eos>',
+            # unk_token = '<unk>',
+        )
 
     def get_vocab(self) -> Dict[str, int]:
         """Returns the vocabulary as a dict"""

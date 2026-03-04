@@ -44,10 +44,10 @@ class Coconut(nn.Module):
             input_ids == self.latent_token_id
         ).nonzero()  # (num_latent_tokens_in_the_batch, 2)
 
-        latent_lists = [
-            [idx[1].item() for idx in latent_indices if idx[0] == i]
-            for i in range(input_ids.shape[0])
-        ]  # bs, num_latent_tokens_in_the_instance (difference across the batch)
+        latent_lists = [[] for _ in range(input_ids.shape[0])]
+        for row, col in latent_indices.tolist():
+            latent_lists[row].append(col)
+        # bs, num_latent_tokens_in_the_instance (difference across the batch)
 
         max_n_latents = max([len(l) for l in latent_lists])
 
@@ -130,32 +130,14 @@ class Coconut(nn.Module):
                 if len(mask_list) > pass_idx
             ]
 
-            # to avoid in-place operations
-            # break down inputs_embeds (bs, len, hidden_size) into a list of list of 1-d tensors
-            tensor_list = [
-                [
-                    inputs_embeds[batch_idx, pos, :]
-                    for pos in range(inputs_embeds.shape[1])
-                ]
-                for batch_idx in range(inputs_embeds.shape[0])
-            ]
+            # clone to avoid in-place operations on the computation graph
+            inputs_embeds = inputs_embeds.clone()
 
-            # replace some of them with continuous thoughts
-            for idx_pair in filling_indices:
-                batch_idx, token_idx = idx_pair
-
-                # replace it with the preceding last hidden states
-                tensor_list[batch_idx][token_idx] = hidden_states[
-                    batch_idx, token_idx - 1 - hidden_states_offset, :
-                ]
-
-            # assemble the new inputs_embeds
-            inputs_embeds = torch.stack(
-                [
-                    torch.stack(tensor_list[batch_idx])
-                    for batch_idx in range(inputs_embeds.shape[0])
-                ]
-            )
+            # replace latent token positions with the preceding hidden states
+            if filling_indices:
+                bi = torch.tensor([f[0] for f in filling_indices], device=inputs_embeds.device)
+                ti = torch.tensor([f[1] for f in filling_indices], device=inputs_embeds.device)
+                inputs_embeds[bi, ti] = hidden_states[bi, ti - 1 - hidden_states_offset]
 
         # final pass
         outputs = self.base_causallm(

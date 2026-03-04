@@ -2,7 +2,7 @@
 
 project: coconut
 save_path: ckpts
-name: "prosqa-coconut-2l-8h-768d"
+name: "prosqa-coconut-2l-8h-768d-control-default-params"
 
 only_eval: False
 

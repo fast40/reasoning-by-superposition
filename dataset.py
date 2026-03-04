@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from typing import Optional
 
 import torch
-import torch.distributed as dist
 from datasets import Dataset
 from transformers import PreTrainedTokenizerBase
 from transformers.data.data_collator import pad_without_fast_tokenizer_warning
@@ -198,11 +197,12 @@ def get_graph_latent_cot_dataset(
     scheduled_stage,
     configs,
     tokenizer,
+    base_dataset=None,
 ):
-    base_dataset = json.load(open(dataset_path))
-    
-    if configs.debug:
-        base_dataset = base_dataset[:10000]
+    if base_dataset is None:
+        base_dataset = json.load(open(dataset_path))
+        if configs.debug:
+            base_dataset = base_dataset[:10000]
 
     def process_dataset(sample):
 
@@ -237,43 +237,23 @@ def get_graph_latent_cot_dataset(
             
         return processed_samples
 
-    if torch.cuda.device_count() > 1:
-        if dist.get_rank() == 0:
-            # Process each sample and collect all results
-            all_processed_samples = []
-            for sample in base_dataset:
-                processed_samples = process_dataset(sample)
-                all_processed_samples.extend(processed_samples)
-            
-            processed_dataset = all_processed_samples
-            
-            random.shuffle(processed_dataset)
-            processed_dataset = [processed_dataset]
-        else:
-            processed_dataset = [None]
-        dist.broadcast_object_list(processed_dataset, src=0)
-        dataset = processed_dataset[0]
-    else:
-        # Process each sample and collect all results
-        all_processed_samples = []
-        for sample in base_dataset:
-            processed_samples = process_dataset(sample)
-            all_processed_samples.extend(processed_samples)
-        
-        processed_dataset = all_processed_samples
-        random.shuffle(processed_dataset)
-        dataset = processed_dataset
-    return dataset
+    all_processed_samples = []
+    for sample in base_dataset:
+        all_processed_samples.extend(process_dataset(sample))
+    random.shuffle(all_processed_samples)
+    return all_processed_samples
 
 def get_graph_latent_question_dataset(
     dataset_path,
     scheduled_stage,
     configs,
     tokenizer,
+    base_dataset=None,
 ):
-    base_dataset = json.load(open(dataset_path))
-    if configs.debug:
-        base_dataset = base_dataset[:10000]
+    if base_dataset is None:
+        base_dataset = json.load(open(dataset_path))
+        if configs.debug:
+            base_dataset = base_dataset[:10000]
     # similar to get_graph_latent_dataset, but we only keep the question
     # without the continuation
     
@@ -290,37 +270,25 @@ def get_graph_latent_question_dataset(
             })
         return processed_samples
     
-    if torch.cuda.device_count() > 1:
-        if dist.get_rank() == 0:
-            # Process each sample and collect all results
-            all_processed_samples = []
-            for idx, sample in enumerate(base_dataset):
-                processed_samples = process_dataset(sample, idx)
-                all_processed_samples.extend(processed_samples)
-            
-            processed_dataset = all_processed_samples
-            random.shuffle(processed_dataset)
-            processed_dataset = [processed_dataset]
-        else:
-            processed_dataset = [None]
-        dist.broadcast_object_list(processed_dataset, src=0)
-        dataset = processed_dataset[0]
-
-    return dataset
+    all_processed_samples = []
+    for idx, sample in enumerate(base_dataset):
+        all_processed_samples.extend(process_dataset(sample, idx))
+    return all_processed_samples
 
 def get_graph_cot_dataset(
     dataset_path,
     configs,
     tokenizer,
+    base_dataset=None,
 ):
     """
     Creates a dataset for training graph reasoning with chain of thought.
     Each sample will contain the graph edges, question, and the full reasoning path to the answer.
     """
-    base_dataset = json.load(open(dataset_path))
-    
-    if configs.debug:
-        base_dataset = base_dataset[:10000]
+    if base_dataset is None:
+        base_dataset = json.load(open(dataset_path))
+        if configs.debug:
+            base_dataset = base_dataset[:10000]
 
     def process_dataset(sample):
         # Shuffle edges for robustness
@@ -365,48 +333,27 @@ def get_graph_cot_dataset(
             
         return [processed_sample]
 
-    if torch.cuda.device_count() > 1:
-        if dist.get_rank() == 0:
-            # Process each sample and collect all results
-            all_processed_samples = []
-            for sample in base_dataset:
-                processed_samples = process_dataset(sample)
-                all_processed_samples.extend(processed_samples)
-            
-            processed_dataset = all_processed_samples
-            random.shuffle(processed_dataset)
-            processed_dataset = [processed_dataset]
-        else:
-            processed_dataset = [None]
-        dist.broadcast_object_list(processed_dataset, src=0)
-        dataset = processed_dataset[0]
-    else:
-        # Process each sample and collect all results
-        all_processed_samples = []
-        for sample in base_dataset:
-            processed_samples = process_dataset(sample)
-            all_processed_samples.extend(processed_samples)
-        
-        processed_dataset = all_processed_samples
-        random.shuffle(processed_dataset)
-        dataset = processed_dataset
-        
-    return dataset
+    all_processed_samples = []
+    for sample in base_dataset:
+        all_processed_samples.extend(process_dataset(sample))
+    random.shuffle(all_processed_samples)
+    return all_processed_samples
 
 def get_graph_no_cot_dataset(
     dataset_path,
     configs,
     tokenizer,
+    base_dataset=None,
 ):
     """
     Creates a dataset for training graph reasoning without chain of thought.
     Each sample will contain the graph edges, question, and only the final answer
     without intermediate reasoning steps.
     """
-    base_dataset = json.load(open(dataset_path))
-    
-    if configs.debug:
-        base_dataset = base_dataset[:10000]
+    if base_dataset is None:
+        base_dataset = json.load(open(dataset_path))
+        if configs.debug:
+            base_dataset = base_dataset[:10000]
 
     def process_dataset(sample):
         # Shuffle edges for robustness
@@ -441,46 +388,26 @@ def get_graph_no_cot_dataset(
             
         return [processed_sample]
 
-    if torch.cuda.device_count() > 1:
-        if dist.get_rank() == 0:
-            # Process each sample and collect all results
-            all_processed_samples = []
-            for sample in base_dataset:
-                processed_samples = process_dataset(sample)
-                all_processed_samples.extend(processed_samples)
-            
-            processed_dataset = all_processed_samples
-            random.shuffle(processed_dataset)
-            processed_dataset = [processed_dataset]
-        else:
-            processed_dataset = [None]
-        dist.broadcast_object_list(processed_dataset, src=0)
-        dataset = processed_dataset[0]
-    else:
-        # Process each sample and collect all results
-        all_processed_samples = []
-        for sample in base_dataset:
-            processed_samples = process_dataset(sample)
-            all_processed_samples.extend(processed_samples)
-        
-        processed_dataset = all_processed_samples
-        random.shuffle(processed_dataset)
-        dataset = processed_dataset
-        
-    return dataset
+    all_processed_samples = []
+    for sample in base_dataset:
+        all_processed_samples.extend(process_dataset(sample))
+    random.shuffle(all_processed_samples)
+    return all_processed_samples
 
 def get_graph_no_latent_question_dataset(
     dataset_path,
     configs,
     tokenizer,
+    base_dataset=None,
 ):
     """
     Creates a dataset containing only the questions from the graph reasoning dataset,
     without any latent tokens. Used for inference to get the input questions.
     """
-    base_dataset = json.load(open(dataset_path))
-    if configs.debug:
-        base_dataset = base_dataset[:10000]
+    if base_dataset is None:
+        base_dataset = json.load(open(dataset_path))
+        if configs.debug:
+            base_dataset = base_dataset[:10000]
     
     def process_dataset(sample, idx):
         # Construct the question part
@@ -506,30 +433,7 @@ def get_graph_no_latent_question_dataset(
         }
         return [processed_sample]
     
-    if torch.cuda.device_count() > 1:
-        if dist.get_rank() == 0:
-            # Process each sample and collect all results
-            all_processed_samples = []
-            for idx, sample in enumerate(base_dataset):
-                processed_samples = process_dataset(sample, idx)
-                all_processed_samples.extend(processed_samples)
-            
-            processed_dataset = all_processed_samples
-            random.shuffle(processed_dataset)
-            processed_dataset = [processed_dataset]
-        else:
-            processed_dataset = [None]
-        dist.broadcast_object_list(processed_dataset, src=0)
-        dataset = processed_dataset[0]
-    else:
-        # Process each sample and collect all results
-        all_processed_samples = []
-        for idx, sample in enumerate(base_dataset):
-            processed_samples = process_dataset(sample, idx)
-            all_processed_samples.extend(processed_samples)
-        
-        processed_dataset = all_processed_samples
-        random.shuffle(processed_dataset)
-        dataset = processed_dataset
-
-    return dataset
+    all_processed_samples = []
+    for idx, sample in enumerate(base_dataset):
+        all_processed_samples.extend(process_dataset(sample, idx))
+    return all_processed_samples

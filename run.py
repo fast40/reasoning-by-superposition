@@ -210,6 +210,13 @@ def main():
 
     collator = MyCollator(tokenizer, latent_id=latent_id, label_pad_token_id=-100)
 
+    # Load JSON data once to avoid re-parsing every epoch
+    train_data_raw = json.load(open(configs.train_path))
+    val_data_raw = json.load(open(configs.val_path))
+    if configs.debug:
+        train_data_raw = train_data_raw[:10000]
+        val_data_raw = val_data_raw[:10000]
+
     for epoch in range(configs.resume, configs.num_epochs):
         
         scheduled_stage = (
@@ -223,6 +230,7 @@ def main():
                     configs.val_path,
                     configs,
                     tokenizer,
+                    base_dataset=val_data_raw,
                 )
             else:   
                 dataset_gen_val = get_graph_latent_question_dataset(
@@ -230,6 +238,7 @@ def main():
                     scheduled_stage,
                     configs,
                     tokenizer,
+                    base_dataset=val_data_raw,
                 )
 
             valid_gen_dataloader = torch.utils.data.DataLoader(
@@ -248,12 +257,14 @@ def main():
                     configs.train_path,
                     configs,
                     tokenizer,
+                    base_dataset=train_data_raw,
                 )
             elif configs.no_cot:
                 dataset_train = get_graph_no_cot_dataset(
                     configs.train_path,
                     configs,
                     tokenizer,
+                    base_dataset=train_data_raw,
                 )
             else:
                 dataset_train = get_graph_latent_cot_dataset(
@@ -261,6 +272,7 @@ def main():
                     scheduled_stage,
                     configs,
                     tokenizer,
+                    base_dataset=train_data_raw,
                 )
             train_dataloader = torch.utils.data.DataLoader(
                 dataset_train,
@@ -279,12 +291,14 @@ def main():
                     configs.val_path,
                     configs,
                     tokenizer,
+                    base_dataset=val_data_raw,
                 )
             elif configs.no_cot:
                 dataset_loss_val = get_graph_no_cot_dataset(
                     configs.val_path,
                     configs,
                     tokenizer,
+                    base_dataset=val_data_raw,
                 )
             else:
                 dataset_loss_val = get_graph_latent_cot_dataset(
@@ -292,6 +306,7 @@ def main():
                     scheduled_stage,
                     configs,
                     tokenizer,
+                    base_dataset=val_data_raw,
                 )
 
             valid_loss_dataloader = torch.utils.data.DataLoader(
