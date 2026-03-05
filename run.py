@@ -17,7 +17,7 @@ from torch.distributed.fsdp.wrap import transformer_auto_wrap_policy
 from transformers.models.llama.modeling_llama import LlamaDecoderLayer
 from transformers.models.gpt2.modeling_gpt2 import GPT2Block
 
-from coconut import Coconut
+from coconut_dual import Coconut
 from dataset import (
     MyCollator,
     get_graph_latent_question_dataset,
@@ -147,7 +147,13 @@ def main():
         configs.coconut = False
 
     if configs.coconut:
-        model = Coconut(model, latent_id, start_id, end_id, tokenizer.eos_token_id)
+        model = Coconut(
+            model, latent_id, start_id, end_id, tokenizer.eos_token_id,
+            layer_skip=getattr(configs, "layer_skip", False),
+            skip_layer_norm=getattr(configs, "skip_layer_norm", True),
+            skip_inject_layer=getattr(configs, "skip_inject_layer", 1),
+            skip_extract_layer=getattr(configs, "skip_extract_layer", 1),
+        )
 
     if configs.load_model_path != "None" and not loaded:
         print(model.load_state_dict(saved_weights, strict=False))
