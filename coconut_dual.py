@@ -386,30 +386,13 @@ class Coconut(nn.Module):
 
             # to avoid in-place operations
             # break down inputs_embeds (bs, len, hidden_size) into a list of list of 1-d tensors
-            tensor_list = [
-                [
-                    inputs_embeds[batch_idx, pos, :]
-                    for pos in range(inputs_embeds.shape[1])
-                ]
-                for batch_idx in range(inputs_embeds.shape[0])
-            ]
+            inputs_embeds = inputs_embeds.clone()
 
-            # replace some of them with continuous thoughts
-            for idx_pair in filling_indices:
-                batch_idx, token_idx = idx_pair
+            if filling_indices:
+                batch_idx = torch.tensor([filling_idx[0] for filling_idx in filling_indices], device=inputs_embeds.device)
+                token_idx = torch.tensor([filling_idx[1] for filling_idx in filling_indices], device=inputs_embeds.device)
+                inputs_embeds[batch_idx, token_idx] = hidden_states[batch_idx, token_idx - 1 - hidden_states_offset]
 
-                # replace it with the preceding hidden states
-                tensor_list[batch_idx][token_idx] = hidden_states[
-                    batch_idx, token_idx - 1 - hidden_states_offset, :
-                ]
-
-            # assemble the new inputs_embeds
-            inputs_embeds = torch.stack(
-                [
-                    torch.stack(tensor_list[batch_idx])
-                    for batch_idx in range(inputs_embeds.shape[0])
-                ]
-            )
 
         # final pass: full model on remaining tokens (last latent + post-latent)
         outputs = self.base_causallm(
