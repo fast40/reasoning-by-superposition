@@ -1,0 +1,42 @@
+[0.000s] pass 0/4 - building tensor_list
+[0.089s] pass 0/4 - filling indices
+[0.091s] pass 0/4 - torch.stack
+[0.100s] pass 1/4 - building tensor_list
+[0.190s] pass 1/4 - filling indices
+[0.192s] pass 1/4 - torch.stack
+[0.197s] pass 2/4 - building tensor_list
+[0.287s] pass 2/4 - filling indices
+[0.289s] pass 2/4 - torch.stack
+[0.294s] pass 3/4 - building tensor_list
+[0.382s] pass 3/4 - filling indices
+[0.384s] pass 3/4 - torch.stack
+[0.390s] forward done, starting backward
+[0.390s] inputs_embeds.sum() done
+[3.855s] backward done
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+                                                   Name    Self CPU %      Self CPU   CPU total %     CPU total  CPU time avg     Self CUDA   Self CUDA %    CUDA total  CUDA time avg    # of Calls  
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+autograd::engine::evaluate_function: SelectBackward0...         9.23%     300.840ms        63.01%        2.054s      40.126us       0.000us         0.00%        3.067s      59.898us         51200  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us        2.241s        71.18%        2.241s      87.536us         25596  
+                                             aten::add_         3.41%     111.333ms         6.68%     217.821ms       8.510us        2.240s        71.18%        2.240s      87.533us         25596  
+                                        SelectBackward0         1.45%      47.345ms        47.10%        1.536s      29.996us       0.000us         0.00%     826.291ms      16.139us         51200  
+                                  aten::select_backward         4.39%     143.074ms        45.65%        1.488s      29.072us       0.000us         0.00%     826.291ms      16.139us         51200  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us     777.721ms        24.71%     777.721ms      10.126us         76801  
+                                            aten::fill_         7.75%     252.823ms        18.08%     589.575ms       7.677us     777.664ms        24.71%     777.664ms      10.126us         76801  
+                                            aten::zeros         3.92%     127.725ms        36.71%        1.197s      15.586us       0.000us         0.00%     777.663ms      10.126us         76800  
+                                            aten::zero_         4.61%     150.232ms        22.69%     739.790ms       9.633us       0.000us         0.00%     777.663ms      10.126us         76800  
+                                            aten::copy_         7.74%     252.296ms        20.29%     661.612ms       8.615us     127.635ms         4.05%     127.635ms       1.662us         76800  
+                         Memcpy DtoD (Device -> Device)         0.00%       0.000us         0.00%       0.000us       0.000us     115.758ms         3.68%     115.758ms       1.644us         70400  
+    autograd::engine::evaluate_function: SliceBackward0         3.61%     117.568ms        27.08%     883.166ms      34.499us       0.000us         0.00%      79.006ms       3.086us         25600  
+                                         SliceBackward0         0.92%      29.941ms        23.48%     765.598ms      29.906us       0.000us         0.00%      79.006ms       3.086us         25600  
+                                   aten::slice_backward         2.58%      84.138ms        22.56%     735.657ms      28.737us       0.000us         0.00%      79.006ms       3.086us         25600  
+void at::native::elementwise_kernel<128, 2, at::nati...         0.00%       0.000us         0.00%       0.000us       0.000us      11.881ms         0.38%      11.881ms       1.856us          6400  
+                                            aten::stack         0.20%       6.397ms         0.68%      22.192ms      43.008us       0.000us         0.00%       1.323ms       2.565us           516  
+                                              aten::cat         0.27%       8.826ms         0.48%      15.490ms      30.019us       1.323ms         0.04%       1.323ms       2.565us           516  
+void at::native::(anonymous namespace)::CatArrayBatc...         0.00%       0.000us         0.00%       0.000us       0.000us       1.086ms         0.03%       1.086ms       2.121us           512  
+       autograd::engine::evaluate_function: MmBackward0         0.00%      33.393us         0.01%     171.952us     171.952us       0.000us         0.00%     308.992us     308.992us             1  
+                                            MmBackward0         0.00%      10.376us         0.00%     138.559us     138.559us       0.000us         0.00%     308.992us     308.992us             1  
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+Self CPU time total: 3.261s
+Self CUDA time total: 3.148s
+

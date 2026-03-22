@@ -1,0 +1,38 @@
+[0.000s] pass 0/4 - clone
+[0.000s] pass 0/4 - vectorized assignment
+[0.009s] pass 1/4 - clone
+[0.009s] pass 1/4 - vectorized assignment
+[0.009s] pass 2/4 - clone
+[0.009s] pass 2/4 - vectorized assignment
+[0.010s] pass 3/4 - clone
+[0.010s] pass 3/4 - vectorized assignment
+[0.010s] forward done, starting backward
+[0.010s] inputs_embeds.sum() done
+[0.102s] backward done
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+                                                   Name    Self CPU %      Self CPU   CPU total %     CPU total  CPU time avg     Self CUDA   Self CUDA %    CUDA total  CUDA time avg    # of Calls  
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+    autograd::engine::evaluate_function: IndexBackward0         0.07%      66.073us        89.56%      89.759ms      22.440ms       0.000us         0.00%     465.088us     116.272us             4  
+                                            aten::copy_         0.10%      96.640us         0.28%     279.111us      17.444us     441.056us        31.98%     441.056us      27.566us            16  
+                                            aten::clone         0.05%      48.999us         0.49%     490.801us      61.350us       0.000us         0.00%     437.087us      54.636us             8  
+                         Memcpy DtoD (Device -> Device)         0.00%       0.000us         0.00%       0.000us       0.000us     410.431us        29.76%     410.431us      58.633us             7  
+       autograd::engine::evaluate_function: MmBackward0         0.01%       9.941us         0.10%     102.346us     102.346us       0.000us         0.00%     320.863us     320.863us             1  
+                                            MmBackward0         0.01%      10.351us         0.09%      92.405us      92.405us       0.000us         0.00%     320.863us     320.863us             1  
+                                               aten::mm         0.06%      55.202us         0.07%      72.864us      72.864us     320.863us        23.27%     320.863us     320.863us             1  
+void cutlass::Kernel2<cutlass_80_simt_sgemm_128x64_8...         0.00%       0.000us         0.00%       0.000us       0.000us     320.383us        23.23%     320.383us     320.383us             1  
+                                             aten::add_         0.05%      53.091us         0.11%     110.076us      13.760us     273.888us        19.86%     273.888us      34.236us             8  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us     268.543us        19.47%     268.543us      67.136us             4  
+autograd::engine::evaluate_function: IndexPutBackwar...         0.04%      40.516us         0.81%     812.083us     203.021us       0.000us         0.00%     257.314us      64.328us             4  
+                                      IndexPutBackward0         0.05%      51.629us         0.77%     771.567us     192.892us       0.000us         0.00%     257.314us      64.328us             4  
+                                        aten::index_put         0.03%      26.409us         0.47%     474.306us     118.576us       0.000us         0.00%     229.601us      57.400us             4  
+                                         IndexBackward0         0.04%      37.852us        89.47%      89.661ms      22.415ms       0.000us         0.00%     203.649us      50.912us             4  
+                                 aten::_index_put_impl_         0.40%     396.097us        89.43%      89.621ms       7.468ms      91.903us         6.66%     134.784us      11.232us            12  
+                                            aten::fill_         0.06%      58.381us         0.13%     133.725us      14.858us     119.841us         8.69%     119.841us      13.316us             9  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us     119.841us         8.69%     119.841us      13.316us             9  
+                                            aten::zero_         0.04%      38.355us         0.16%     158.817us      19.852us       0.000us         0.00%     118.465us      14.808us             8  
+                                        aten::new_zeros         0.02%      20.497us         0.26%     259.944us      64.986us       0.000us         0.00%     112.321us      28.080us             4  
+                                  cudaDeviceSynchronize         0.30%     299.399us         0.30%     299.399us      24.950us      58.912us         4.27%      58.912us       4.909us            12  
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+Self CPU time total: 100.219ms
+Self CUDA time total: 1.379ms
+
