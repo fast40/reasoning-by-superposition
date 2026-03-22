@@ -27,6 +27,7 @@ from dataset import (
     get_graph_cot_dataset,
 )
 
+from pydantic import BaseModel
 from tqdm import tqdm
 import os, sys
 import yaml
@@ -54,7 +55,7 @@ def main():
     if rank == 0:
         print("Config:", config_dict)
 
-    configs = Config(config_dict)
+    configs = Config.model_validate(config_dict)
     set_seed(configs.seed)
     save_dir = os.path.join(configs.save_path, configs.name)
 
@@ -216,6 +217,7 @@ def main():
 
     collator = MyCollator(tokenizer, latent_id=latent_id, label_pad_token_id=-100)
 
+    # === main training loop ===
     for epoch in range(configs.resume, configs.num_epochs):
         
         scheduled_stage = (
@@ -247,8 +249,10 @@ def main():
                 sampler=DistributedSampler(dataset_gen_val, shuffle=False),
             )
 
+        # === create train_dataloader, 
         if not configs.only_eval:
 
+            # === create train_dataloader ===
             if configs.cot:
                 dataset_train = get_graph_cot_dataset(
                     configs.train_path,
@@ -278,6 +282,7 @@ def main():
                 sampler=DistributedSampler(dataset_train, shuffle=True),
             )
 
+            # === create valid_loss_dataloader ===
             # the sampler is deterministic even if shuffle is set to True
             # so we have shuffled the dataset when it's constructed (at every epoch).
             if configs.cot:
@@ -310,6 +315,7 @@ def main():
                 sampler=DistributedSampler(dataset_loss_val, shuffle=False),
             )
 
+            # === create optimizer ===
             if configs.reset_optimizer and scheduled_stage < configs.max_latent_stage:
                 del optimizer
 
@@ -319,8 +325,10 @@ def main():
                     weight_decay=configs.weight_decay,
                 )
 
+            # === set the model to train ===
             parallel_model.module.train()
 
+            # === create tqdm bar for this epoch ===
             total_length = len(train_dataloader) // configs.gradient_accumulation_steps
             pbar = tqdm(
                 colour="blue",
